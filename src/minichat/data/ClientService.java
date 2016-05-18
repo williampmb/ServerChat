@@ -48,4 +48,8 @@ public class ClientService {
         dbClients.delete(client);
     }
 
+    public Client createClient(String name) {
+       return dbClients.createClient(name);
+    }
+
 }

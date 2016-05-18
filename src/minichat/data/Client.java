@@ -23,6 +23,11 @@ public class Client {
         this.connection = connection;
     }
 
+    Client(String name, int id) {
+        this.id = id;
+        this.name = name;
+    }
+
     public int getId() {
         return id;
     }

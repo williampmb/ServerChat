@@ -33,6 +33,7 @@ public class MiniChat {
      */
     public static void main(String[] args) {
         try {
+            System.out.println("Blokcing");
             server = new ServerSocket(9000);
             clientService = ClientService.getInstance();
            

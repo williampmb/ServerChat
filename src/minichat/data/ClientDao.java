@@ -65,4 +65,11 @@ public class ClientDao {
         System.out.println("Cliente Não Encontrado");
     }
 
+    Client createClient(String name) {
+        id++;
+        Client newOne = new Client(name, id);
+        clients.add(newOne);
+        return newOne;
+    }
+
 }
