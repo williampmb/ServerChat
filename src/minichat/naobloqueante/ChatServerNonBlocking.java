@@ -8,13 +8,18 @@ package minichat.naobloqueante;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -33,11 +38,16 @@ public class ChatServerNonBlocking {
 
     static public ClientService clientService;
     static public List<String> msgs = new ArrayList<String>();
-    static public Map<SocketChannel, Integer> map = new HashMap<SocketChannel, Integer>();
+    static public Map<Integer, SocketChannel> map = new HashMap<Integer, SocketChannel>();
+    private static boolean sendListOnline;
+    private static String msgRule;
     String addTag = "/";
-    Client client;
     static String nextMsg = "";
     static boolean hasNextMsg = false;
+    static int idSender;
+    static String msg;
+    static String senderName;
+    static String time;
 
     public static void main(String[] args) {
         System.out.println("Non-Blocking");
@@ -67,11 +77,23 @@ public class ChatServerNonBlocking {
                     nextMsg = msgs.get(0);
                     msgs.remove(0);
                     hasNextMsg = true;
+
+                    String[] tags = nextMsg.split("->");
+                    msgRule = tags[0];
+                    if (msgRule.equals("newMsg")) {
+                        idSender = Integer.valueOf(getTag(tags[1], "id"));
+                        msg = getTag(tags[1], "msg");
+                        senderName = getTag(tags[1], "name");
+                        time = getTag(tags[1], "time");
+                        System.out.println("!!!TEMPO RECEBIDO DO CLEINTE: " + time);
+                        time = time.substring(0, 2) + ":" + time.substring(2, time.length());
+                        System.out.println("!!!!TEMPO FORMATADO PARA ENVIO!: " + time);
+                        nextMsg = "message:-" + senderName + "[" + time + "]: " + msg;
+                    }
+
                 } else {
                     hasNextMsg = false;
                 }
-                //TODO: erease sout
-                System.out.println("It's new msg: " + hasNextMsg + " the new msg: " + nextMsg);
                 processReadySet(selector.selectedKeys());
 
             }
@@ -90,6 +112,8 @@ public class ChatServerNonBlocking {
             iterator.remove();
 
             if (key.isAcceptable()) {
+                //TODO: eraese debug
+                System.out.println("conexao aceita");
                 ServerSocketChannel sschChannel = (ServerSocketChannel) key.channel();
                 SocketChannel sChannel = (SocketChannel) sschChannel.accept();
                 sChannel.configureBlocking(false);
@@ -100,25 +124,68 @@ public class ChatServerNonBlocking {
                 System.out.println("Prazer, meu nome é : " + tags[1]);
 
                 Client client = clientService.createClient(tags[1]);
-                map.put(sChannel, client.getId());
+                map.put(client.getId(), sChannel);
+
                 String msgOut = "registration:-your id:";
                 msgOut += client.getId();
-                ByteBuffer buffer = ByteBuffer.wrap(msgOut.getBytes());
-                sChannel.write(buffer);
+
+                ByteBuffer buffer1 = ByteBuffer.wrap(msgOut.getBytes());
+                int lengt = buffer1.array().length;
+                byte[] lengtBytes = intToBytes(lengt);
+                ByteBuffer buffer2 = ByteBuffer.wrap(lengtBytes);
+                sChannel.write(buffer2);
+                sChannel.write(buffer1);
+
+                Date date = new Date();
+                DateFormat format = new SimpleDateFormat("HHmm");
+                String time = format.format(date);
+
+                
+                System.out.println("!!!!ADD TEMPO NA HORA DE ADD PESSOA E NOVA MSG DE ENTRADA DE UMA PESSOA: " + time);
+                msgs.add("addPerson->id:0/time:" + time);
+
+                msgs.add("newMsg->id:0/name:Servidor/time:" + time + "/msg:o usuário " + client.getName() + " entrou na sala.");
             }
 
             if (key.isReadable()) {
                 String newMsg = processRead(key);
                 System.out.println("Mensagem Recebida: " + newMsg);
+                newMsg = "newMsg->" + newMsg;
                 if (newMsg.length() > 0) {
                     msgs.add(newMsg);
                 }
             }
             if (key.isWritable() && hasNextMsg) {
-                SocketChannel sc = (SocketChannel) key.channel();
-                ByteBuffer buffer = ByteBuffer.allocate(1024);
-                buffer = ByteBuffer.wrap("Enviando resposta".getBytes());
-                sc.write(buffer);
+                SocketChannel scReceiver = (SocketChannel) key.channel();
+
+                switch (msgRule) {
+                    case "newMsg":
+                        SocketChannel scSender = map.get(idSender);
+                        if (scSender == null || !scReceiver.getRemoteAddress().equals(scSender.getRemoteAddress())) {
+
+                            ByteBuffer buffer1 = ByteBuffer.wrap(nextMsg.getBytes());
+                            int lengt = buffer1.array().length;
+                            byte[] lengtBytes = intToBytes(lengt);
+                            ByteBuffer buffer2 = ByteBuffer.wrap(lengtBytes);
+                            scReceiver.write(buffer2);
+                            scReceiver.write(buffer1);
+                        }
+
+                        break;
+                    case "addPerson":
+                        String listOnline = whoOnline();
+
+                        ByteBuffer buffer1 = ByteBuffer.wrap(listOnline.getBytes());
+                        int lengt = buffer1.array().length;
+                        byte[] lengtBytes = intToBytes(lengt);
+                        ByteBuffer buffer2 = ByteBuffer.wrap(lengtBytes);
+                        scReceiver.write(buffer2);
+                        scReceiver.write(buffer1);
+
+                        break;
+
+                }
+
             }
         }
     }
@@ -144,4 +211,33 @@ public class ChatServerNonBlocking {
         }
         return "NoMessage";
     }
+
+    public static byte[] intToBytes(final int i) {
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(i);
+        return bb.array();
+    }
+
+    private static String getTag(String msg, String tag) {
+        String[] tags = msg.split("/");
+        for (int i = 0; i < tags.length; i++) {
+            String[] flag = tags[i].split(":");
+            if (flag[0].equals(tag)) {
+                return flag[1];
+            }
+        }
+        return null;
+    }
+
+    private static String whoOnline() {
+        List<Client> clients = clientService.getClient();
+        String msgBuilder = "";
+        for (Client c : clients) {
+            msgBuilder += c.getName() + "--";
+        }
+        msgBuilder = "online:-" + msgBuilder;
+
+        return msgBuilder;
+    }
+
 }
