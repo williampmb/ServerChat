@@ -7,6 +7,8 @@ package minichat;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 import minichat.data.Client;
@@ -28,25 +30,39 @@ class RequestHandler extends Thread {
     public void run() {
         try {
 
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-            String msgIn = dis.readUTF();
+            InputStream is = socket.getInputStream();
+            OutputStream os = socket.getOutputStream();
+
+            String msgIn = MiniChat.processRead(is);
+          
+
             String[] tags = msgIn.split(":-");
 
             client = MiniChat.clientService.createClient(socket, tags[1]);
             String msgOut = "registration:-your id:";
             msgOut += client.getId();
-            System.out.println("msg enviada: " + msgOut);
-            MiniChat.map.put(client.getId(), dos);
-            dos.writeUTF(msgOut);
-            dos.flush();
+            MiniChat.map.put(client.getId(), os);
+
+           
+            int length = msgOut.getBytes().length;
+            System.out.println("lenght:" + length);
+            System.out.println("msg:" + msgOut);
+            
+            byte[] lengthBytes = MiniChat.intToBytes(length);
+            byte[] msgOutBytes = msgOut.getBytes();
+            byte[] fullBytes = MiniChat.concatenateBytes(lengthBytes, msgOutBytes);
+            
+            
+            os.write(fullBytes);
+            os.flush();
 
             MiniChat.addMsg("addPerson->");
-            
+
             MiniChat.addMsg("newMsg->id:0/name:Servidor/msg:o usuário " + client.getName() + " entrou na sala.");
 
             while (true) {
-                String in = dis.readUTF();
+                String in = MiniChat.processRead(is);
+              
                 in = "newMsg->" + in;
                 MiniChat.addMsg(in);
             }

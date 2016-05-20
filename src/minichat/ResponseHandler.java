@@ -7,6 +7,7 @@ package minichat;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,7 +21,7 @@ import static sun.print.ServiceDialog.getMsg;
  */
 public class ResponseHandler extends Thread {
 
-    DataOutputStream wayOut = null;
+    OutputStream wayOut = null;
 
     public ResponseHandler() {
     }
@@ -57,7 +58,19 @@ public class ResponseHandler extends Thread {
             if (c.getId() != idClient) {
                 try {
                     wayOut = MiniChat.map.get(c.getId());
-                    wayOut.writeUTF(msgBuilder);
+
+                    int length = msgBuilder.getBytes().length;
+                    System.out.println("!!");
+                    System.out.println(msgBuilder);
+                    System.out.println("!!");
+
+                    byte[] lengthBytes = MiniChat.intToBytes(length);
+                    byte[] msgOutBytes = msgBuilder.getBytes();
+                    byte[] fullBytes = MiniChat.concatenateBytes(lengthBytes, msgOutBytes);
+
+                    wayOut.write(fullBytes);
+                    wayOut.flush();
+
                 } catch (IOException ex) {
                     Logger.getLogger(ResponseHandler.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -79,14 +92,22 @@ public class ResponseHandler extends Thread {
 
             try {
                 wayOut = MiniChat.map.get(c.getId());
-                wayOut.writeUTF(msgBuilder);
+
+                int length = msgBuilder.getBytes().length;
+                byte[] lengthBytes = MiniChat.intToBytes(length);
+                byte[] msgOutBytes = msgBuilder.getBytes();
+                byte[] fullBytes = MiniChat.concatenateBytes(lengthBytes, msgOutBytes);
+
+                wayOut.write(fullBytes);
+                wayOut.flush();
+
             } catch (IOException ex) {
                 Logger.getLogger(ResponseHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
 
         }
     }
-
+    //FIXME: change the tag of split: it brakes the message that comes  with : character
     private String getTag(String msg, String tag) {
         String[] tags = msg.split("/");
         for (int i = 0; i < tags.length; i++) {

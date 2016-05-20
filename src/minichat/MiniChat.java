@@ -8,8 +8,11 @@ package minichat;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -27,7 +30,7 @@ public class MiniChat {
     static ServerSocket server;
     static public ClientService clientService;
     static public List<String> msgs = new ArrayList<String>();
-    static public Map<Integer, DataOutputStream> map = new HashMap<Integer,DataOutputStream>();
+    static public Map<Integer, OutputStream> map = new HashMap<Integer,OutputStream>();
     /**
      * @param args the command line arguments
      */
@@ -47,8 +50,6 @@ public class MiniChat {
                 RequestHandler rh = new RequestHandler(connected);
                 rh.start();
                 
-               // ResponseHandler2 response = new ResponseHandler2(connected);
-                //response.start();
                 
             }
         } catch (IOException e) {
@@ -69,8 +70,8 @@ public class MiniChat {
     }
 
     static void addMsg(String in) {
-        
-        System.out.println("adicionar a msg: " + in + " - dentro das mensagens");
+    
+    
         msgs.add(in);
     }
 
@@ -82,6 +83,37 @@ public class MiniChat {
         String nextMsg = msgs.get(0);
         msgs.remove(0);
         return nextMsg;
+    }
+    
+    public static byte[] intToBytes(final int i) {
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(i);
+        return bb.array();
+    }
+    
+     public static String processRead(InputStream is) throws IOException {
+        
+        byte[] bufferSize = new byte[4];
+        int byteSize = is.read(bufferSize);
+      
+        
+        ByteBuffer wrapped = ByteBuffer.wrap(bufferSize);
+        int size = wrapped.getInt();
+            
+        byte[] bufferMsg = new byte[size];
+        int byteMsg = is.read(bufferMsg);
+//        is.reset();
+        String msgIn = new String(bufferMsg,0,byteMsg);
+    
+      
+        return msgIn;
+    }
+     
+      public static byte[] concatenateBytes(byte[] lengthBytes, byte[] msgOutBytes) {
+        byte[] result = new byte[lengthBytes.length + msgOutBytes.length];
+        System.arraycopy(lengthBytes, 0, result, 0, lengthBytes.length);
+        System.arraycopy(msgOutBytes, 0, result, lengthBytes.length, msgOutBytes.length);
+        return result;
     }
 
 }
