@@ -39,6 +39,10 @@ public class ClientService {
     public List<Client> getClient() {
        return dbClients.getClients();
     }
+    
+     public Client getClient(int id) {
+       return dbClients.getClient(id);
+    }
 
     public Client getClientBySocket(Socket socket) {
         return dbClients.getClientBySocket(socket);

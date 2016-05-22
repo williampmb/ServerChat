@@ -46,22 +46,22 @@ public class ClientDao {
     }
 
     Client getClientBySocket(Socket socket) {
-        for(Client c : clients){
-            if(socket == c.getConnection()){
+        for (Client c : clients) {
+            if (socket == c.getConnection()) {
                 return c;
             }
-            
+
         }
         return null;
     }
 
     void delete(Client client) {
-       for(Client c : clients){
-           if(client.getId() == c.getId()){
-               clients.remove(c);
-               return;
-           }
-       }
+        for (Client c : clients) {
+            if (client.getId() == c.getId()) {
+                clients.remove(c);
+                return;
+            }
+        }
         System.out.println("Cliente Não Encontrado");
     }
 
@@ -70,6 +70,15 @@ public class ClientDao {
         Client newOne = new Client(name, id);
         clients.add(newOne);
         return newOne;
+    }
+
+    public Client getClient(int id) {
+        for (Client c : clients) {
+            if (c.getId() == id) {
+                return c;
+            }
+        }
+        return null;
     }
 
 }
