@@ -52,6 +52,8 @@ public class ChatServerNonBlocking {
     static String msg;
     static String senderName;
     static String time;
+    //FIXME: handle empty messages
+    //FIXME: handle messages that has :
 
     public static void main(String[] args) {
         System.out.println("Non-Blocking");
