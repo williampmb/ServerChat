@@ -5,13 +5,14 @@
  */
 package minichat;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import minichat.data.Client;
+import static minichat.naobloqueante.ChatServerNonBlocking.msgs;
 
 /**
  *
@@ -34,7 +35,6 @@ class RequestHandler extends Thread {
             OutputStream os = socket.getOutputStream();
 
             String msgIn = MiniChat.processRead(is);
-          
 
             String[] tags = msgIn.split(":-");
 
@@ -43,35 +43,42 @@ class RequestHandler extends Thread {
             msgOut += client.getId();
             MiniChat.map.put(client.getId(), os);
 
-           
             int length = msgOut.getBytes().length;
             System.out.println("lenght:" + length);
             System.out.println("msg:" + msgOut);
-            
+
             byte[] lengthBytes = MiniChat.intToBytes(length);
             byte[] msgOutBytes = msgOut.getBytes();
             byte[] fullBytes = MiniChat.concatenateBytes(lengthBytes, msgOutBytes);
-            
-            
+
             os.write(fullBytes);
             os.flush();
 
-            MiniChat.addMsg("addPerson->");
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat("HHmm");
+            String time = format.format(date);
+            
+            
 
-            MiniChat.addMsg("newMsg->id:0/name:Servidor/msg:o usuário " + client.getName() + " entrou na sala.");
+            MiniChat.addMsg("addPerson->id:0/time:" + time);
+
+            MiniChat.addMsg("newMsg->id:0/name:Servidor/time:" + time + "/msg:o usuário " + client.getName() + " entrou na sala.");
 
             while (true) {
                 String in = MiniChat.processRead(is);
-              
+
                 in = "newMsg->" + in;
                 MiniChat.addMsg(in);
             }
 
         } catch (Exception e) {
-            MiniChat.addMsg("newMsg->id:0/name:Servidor/msg:o usuário " + client.getName() + " desconectou.");
+            Date date = new Date();
+            DateFormat format = new SimpleDateFormat("HHmm");
+            String time = format.format(date);
+
+            MiniChat.addMsg("newMsg->id:0/name:Servidor/time:" + time + "/msg:o usuário " + client.getName() + " desconectou.");
             MiniChat.clientService.delete(client);
-            MiniChat.addMsg("addPerson->");
-            System.out.println("Erro: response");
+            MiniChat.addMsg("addPerson->id:0/time:" + time);
         }
     }
 

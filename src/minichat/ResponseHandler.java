@@ -5,15 +5,15 @@
  */
 package minichat;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import minichat.data.Client;
-import static sun.print.ServiceDialog.getMsg;
 
 /**
  *
@@ -48,10 +48,18 @@ public class ResponseHandler extends Thread {
 
     private void sendMsg(String full) {
 
+       
+        String time ="";
+
+        time = getTag(full, "time");
+        if (!time.equals("0")) {
+            time = time.substring(0, 2) + ":" + time.substring(2, time.length());
+        }
+
         int idClient = Integer.valueOf(getTag(full, "id"));
         String msg = getTag(full, "msg");
         String name = getTag(full, "name");
-        String msgBuilder = "message:-" + name + " : " + msg;
+        String msgBuilder = "message:-" + name + "[" + time + "] : " + msg;
 
         List<Client> clients = minichat.MiniChat.clientService.getClient();
         for (Client c : clients) {
@@ -60,9 +68,7 @@ public class ResponseHandler extends Thread {
                     wayOut = MiniChat.map.get(c.getId());
 
                     int length = msgBuilder.getBytes().length;
-                    System.out.println("!!");
                     System.out.println(msgBuilder);
-                    System.out.println("!!");
 
                     byte[] lengthBytes = MiniChat.intToBytes(length);
                     byte[] msgOutBytes = msgBuilder.getBytes();
@@ -107,6 +113,7 @@ public class ResponseHandler extends Thread {
 
         }
     }
+
     //FIXME: change the tag of split: it brakes the message that comes  with : character
     private String getTag(String msg, String tag) {
         String[] tags = msg.split("/");

@@ -5,8 +5,6 @@
  */
 package minichat;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,10 +13,8 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import minichat.data.ClientService;
 
 /**
@@ -95,14 +91,12 @@ public class MiniChat {
         
         byte[] bufferSize = new byte[4];
         int byteSize = is.read(bufferSize);
-      
         
         ByteBuffer wrapped = ByteBuffer.wrap(bufferSize);
         int size = wrapped.getInt();
             
         byte[] bufferMsg = new byte[size];
         int byteMsg = is.read(bufferMsg);
-//        is.reset();
         String msgIn = new String(bufferMsg,0,byteMsg);
     
       

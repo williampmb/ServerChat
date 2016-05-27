@@ -6,15 +6,11 @@
 package minichat.naobloqueante;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -42,7 +38,6 @@ public class ChatServerNonBlocking {
     static public ClientService clientService;
     static public List<String> msgs = new ArrayList<String>();
     static public Map<Integer, SocketChannel> map = new HashMap<Integer, SocketChannel>();
-    private static boolean sendListOnline;
     private static String msgRule;
 
     String addTag = "/";
