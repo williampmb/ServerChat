@@ -53,10 +53,8 @@ public class ChatServerNonBlocking {
     public static void main(String[] args) {
         System.out.println("Non-Blocking");
         clientService = ClientService.getInstance();
-        InetAddress hostIPAddress;
         try {
-            hostIPAddress = InetAddress.getByName("localhost");
-
+           
             int port = 9001;
 
             Selector selector = Selector.open();
@@ -65,7 +63,7 @@ public class ChatServerNonBlocking {
 
             ssChannel.configureBlocking(false);
 
-            ssChannel.socket().bind(new InetSocketAddress(hostIPAddress, port));
+            ssChannel.socket().bind(new InetSocketAddress(port));
 
             ssChannel.register(selector, SelectionKey.OP_ACCEPT);
 
